@@ -1,0 +1,565 @@
+import asyncio
+import sys
+
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+
+from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+from typing import Optional, Dict, Any
+import asyncio
+import logging
+from datetime import datetime, timedelta
+import uvicorn
+from .ppo_agent import PPOScalingAgent
+from .scaling_controller import ScalingController
+from .state_adapter import build_state_vector
+import os
+from .hpa_observer import HPAObserver
+from .models import TrafficPattern, TrafficStatus, DeploymentStatus,StartTrafficRequest,TrafficPatternType
+from .traffic_generator import LocustTrafficGenerator
+from .kubernetes_client import KubernetesManager
+from .state_adapter import build_state_vector
+from .imitation_trainer import ImitationTrainer
+from .hybrid_controller import HybridController
+from .monitoring import DecisionMonitor
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+app = FastAPI(
+    title="Workload Management - Step 1: Traffic Generator",
+    description="FastAPI service to deploy sample app and generate traffic patterns",
+    version="1.0.0"
+)
+
+
+# Global instances
+k8s_manager = KubernetesManager()
+traffic_generator = LocustTrafficGenerator()
+hpa_observer = HPAObserver(k8s_manager)
+ppo_agent = PPOScalingAgent(
+    model_path=os.getenv("PPO_MODEL_PATH", "models/ppo_k8s_scaler"),
+    min_replicas=int(os.getenv("MIN_REPLICAS", "1")),
+    max_replicas=int(os.getenv("MAX_REPLICAS", "10"))
+)
+decision_monitor = DecisionMonitor()
+scaling_controller = ScalingController(k8s_manager, ppo_agent,monitor=decision_monitor)
+imitation_trainer = ImitationTrainer(ppo_agent, ppo_agent.env)
+
+hybrid_controller = HybridController(k8s_manager, ppo_agent, scaling_controller,monitor=decision_monitor)
+
+# Control loop task storage
+control_loop_task = None
+# Background task storage
+background_tasks_status = {}
+
+# Add helper function to extract Locust aggregated stats
+def _extract_aggregated(locust_stats_for_task: dict) -> dict:
+    """Extract aggregated stats from Locust response"""
+    stats_list = (locust_stats_for_task or {}).get("stats", [])
+    agg = next((s for s in stats_list if s.get("name") in ("Aggregated", "")), None)
+    if not agg and stats_list:
+        total_req = sum(s.get("num_requests", 0) for s in stats_list)
+        total_fail = sum(s.get("num_failures", 0) for s in stats_list)
+        rps = sum(float(s.get("current_rps", 0.0)) for s in stats_list)
+        p95 = max((float(s.get("ninety_fifth_response_time", 0.0)) for s in stats_list), default=0.0)
+        agg = {
+            "name": "Aggregated",
+            "num_requests": total_req,
+            "num_failures": total_fail,
+            "current_rps": rps,
+            "ninety_fifth_response_time": p95,
+        }
+    return agg or {}
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize services on startup"""
+    logger.info("Starting Workload Management Step 1 service...")
+    await k8s_manager.initialize()
+    logger.info("Service initialized successfully")
+
+@app.get("/")
+async def root():
+    """Health check endpoint"""
+    return {
+        "service": "Workload Management Step 1",
+        "status": "running",
+        "timestamp": datetime.utcnow().isoformat(),
+        "version": "1.0.0"
+    }
+
+@app.get("/health")
+async def health_check():
+    """Detailed health check"""
+    k8s_status = await k8s_manager.check_connection()
+    locust_status = traffic_generator.check_status()
+    
+    return {
+        "status": "healthy" if k8s_status and locust_status else "unhealthy",
+        "kubernetes": "connected" if k8s_status else "disconnected",
+        "locust": "available" if locust_status else "unavailable",
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+# helper to pick an Aggregated row (Locust returns per-endpoint and an Aggregated line)
+def _extract_aggregated(locust_stats_for_task: dict) -> dict:
+    # Locust /stats/requests returns a dict with "stats" list and often an "Aggregated" row
+    # Fallback if only per-endpoint rows exist: reduce into a single aggregate
+    stats_list = (locust_stats_for_task or {}).get("stats", [])
+    agg = next((s for s in stats_list if s.get("name") in ("Aggregated", "")), None)
+    if not agg and stats_list:
+        # crude aggregation fallback
+        total_req = sum(s.get("num_requests", 0) for s in stats_list)
+        total_fail = sum(s.get("num_failures", 0) for s in stats_list)
+        rps = sum(float(s.get("current_rps", 0.0)) for s in stats_list)
+        # pick a robust latency proxy if p95 not present in API; controller can refine later
+        p90 = max(float(s.get("ninetieth_response_time", 0.0)) for s in stats_list)
+        agg = {
+            "name": "Aggregated",
+            "num_requests": total_req,
+            "num_failures": total_fail,
+            "current_rps": rps,
+            "ninetieth_response_time": p90,
+        }
+    return agg or {}
+@app.get("/state/vector")
+async def get_state_vector():
+    """Get current state vector for PPO"""
+    try:
+        # 1) Workload: Locust stats
+        locust_all = traffic_generator.get_current_stats()
+        agg = {}
+        if locust_all:
+            any_task_id = next(iter(locust_all.keys()))
+            agg = _extract_aggregated(locust_all.get(any_task_id, {}))
+
+        # 2) Infra: deployment/pod metrics
+        deploy_status = await k8s_manager.get_deployment_status()
+        pods = await k8s_manager.get_pod_metrics()
+
+        # 3) HPA desired + node count
+        try:
+            hpa_desired = await k8s_manager.get_hpa_desired(name="php-apache-hpa", namespace="default")
+        except Exception:
+            hpa_desired = getattr(deploy_status, "desired_replicas", 1)
+        
+        try:
+            node_count = await k8s_manager.get_node_count()
+        except Exception:
+            node_count = 1
+
+        previous_metrics = getattr(scaling_controller, 'prev_metrics', None)
+
+        # 4) Build state vector passing previous_metrics for slope calc
+        state = build_state_vector(
+            locust_agg=agg,
+            pod_metrics=[pm.dict() if hasattr(pm, "dict") else pm.__dict__ for pm in pods],
+            deploy_status=deploy_status.dict() if hasattr(deploy_status, "dict") else deploy_status.__dict__,
+            hpa_desired=hpa_desired,
+            node_count=node_count,
+            last_action_delta=scaling_controller.last_action_delta,
+            steps_since_action=scaling_controller.steps_since_action,
+            previous_metrics=previous_metrics
+        )
+        return state
+
+    except Exception as e:
+        logger.error(f"Failed to get state vector: {str(e)}")
+        raise HTTPException(status_code=500, detail="State vector generation fail")
+
+# Add PPO control endpoints
+@app.post("/ppo/start")
+async def start_ppo_control():
+    """Start PPO-based autoscaling control loop"""
+    global control_loop_task
+    
+    if control_loop_task and not control_loop_task.done():
+        return {"status": "already_running", "message": "PPO control loop is already running"}
+    
+    # Start control loop
+    control_loop_task = asyncio.create_task(
+        scaling_controller.control_loop(get_state_vector)
+    )
+    
+    return {
+        "status": "started",
+        "message": "PPO control loop started",
+        "control_interval": scaling_controller.control_interval
+    }
+
+@app.post("/ppo/stop")
+async def stop_ppo_control():
+    """Stop PPO control loop"""
+    scaling_controller.stop()
+    
+    if control_loop_task:
+        await control_loop_task
+    
+    return {"status": "stopped", "message": "PPO control loop stopped"}
+
+@app.post("/ppo/train")
+async def train_ppo_model(timesteps: int = 10000):
+    """Train PPO model"""
+    try:
+        ppo_agent.enable_training_mode()
+        # Run training in background
+        asyncio.create_task(asyncio.to_thread(ppo_agent.train, timesteps))
+        
+        return {
+            "status": "training_started",
+            "timesteps": timesteps,
+            "message": "PPO training started in background"
+        }
+    except Exception as e:
+        logger.error(f"Training failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Training failed: {str(e)}")
+
+@app.get("/ppo/status")
+async def get_ppo_status():
+    """Get PPO agent status"""
+    return {
+        "training_mode": ppo_agent.training_mode,
+        "control_loop_running": scaling_controller.is_running,
+        "last_action_delta": scaling_controller.last_action_delta,
+        "steps_since_action": scaling_controller.steps_since_action,
+        "control_interval": scaling_controller.control_interval
+    }
+@app.post("/deploy/php-apache")
+async def deploy_php_apache():
+    """Deploy the php-apache sample application"""
+    try:
+        deployment_result = await k8s_manager.deploy_php_apache()
+        return JSONResponse(
+            status_code=200,
+            content={
+                "status": "success",
+                "message": "php-apache application deployed successfully",
+                "deployment": deployment_result,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        )
+    except Exception as e:
+        logger.error(f"Failed to deploy php-apache: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Deployment failed: {str(e)}")
+
+@app.get("/deployment/status")
+async def get_deployment_status():
+    """Get current deployment status"""
+    try:
+        status = await k8s_manager.get_deployment_status()
+        return status
+    except Exception as e:
+        logger.error(f"Failed to get deployment status: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Status check failed: {str(e)}")
+
+@app.post("/traffic/start")
+async def start_traffic_generation(
+    background_tasks: BackgroundTasks,
+    req: StartTrafficRequest
+):
+    """Start traffic generation with specified pattern"""
+    try:
+        # Normalize and validate pattern_type (accept lowercase)
+        pt_str = (req.pattern_type or "").strip().lower()
+        valid = {"burst", "steady", "wave", "step"}
+        if pt_str not in valid:
+            raise HTTPException(
+                status_code=422, 
+                detail=f"Invalid pattern_type '{req.pattern_type}', expected one of {sorted(valid)}"
+            )
+
+        # Map to enum
+        enum_map = {
+            "burst": TrafficPatternType.BURST,
+            "steady": TrafficPatternType.STEADY,
+            "wave": TrafficPatternType.WAVE,
+            "step": TrafficPatternType.STEP,
+        }
+        desired_enum = enum_map[pt_str]
+        
+        # Ensure inner pattern has correct enum value
+        req.pattern.pattern_type = desired_enum
+
+        # Generate task_id
+        task_id = req.task_id or f"traffic_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
+        
+        # Start traffic generation in background
+        background_tasks.add_task(
+            run_traffic_generation, 
+            task_id, 
+            req.pattern
+        )
+        
+        background_tasks_status[task_id] = {
+            "status": "starting",
+            "pattern": req.pattern.dict(),
+            "pattern_type": pt_str,
+            "start_time": datetime.utcnow().isoformat(),
+            "task_id": task_id
+        }
+        
+        return {
+            "status": "success",
+            "message": "Traffic generation started",
+            "task_id": task_id,
+            "pattern_type": pt_str,
+            "pattern": req.pattern.dict()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to start traffic generation: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Traffic generation failed: {str(e)}")
+
+
+@app.get("/traffic/status/{task_id}")
+async def get_traffic_status(task_id: str):
+    """Get traffic generation status"""
+    if task_id not in background_tasks_status:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    status = background_tasks_status[task_id]
+    locust_stats = traffic_generator.get_current_stats()
+    
+    return {
+        "task_status": status,
+        "locust_stats": locust_stats,
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+@app.post("/traffic/stop/{task_id}")
+async def stop_traffic_generation(task_id: str):
+    """Stop traffic generation"""
+    try:
+        if task_id not in background_tasks_status:
+            raise HTTPException(status_code=404, detail="Task not found")
+        
+        result = await traffic_generator.stop_traffic(task_id)
+        background_tasks_status[task_id]["status"] = "stopped"
+        background_tasks_status[task_id]["end_time"] = datetime.utcnow().isoformat()
+        
+        return {
+            "status": "success",
+            "message": "Traffic generation stopped",
+            "task_id": task_id,
+            "result": result
+        }
+    except Exception as e:
+        logger.error(f"Failed to stop traffic generation: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Stop failed: {str(e)}")
+
+@app.get("/traffic/patterns")
+async def get_available_patterns():
+    """Get available traffic patterns"""
+    return {
+        "patterns": [
+            {
+                "name": "burst",
+                "description": "Sudden traffic spike",
+                "parameters": ["peak_users", "duration", "ramp_time"]
+            },
+            {
+                "name": "steady",
+                "description": "Consistent load",
+                "parameters": ["users", "duration"]
+            },
+            {
+                "name": "wave",
+                "description": "Oscillating load pattern",
+                "parameters": ["min_users", "max_users", "cycle_duration", "total_duration"]
+            },
+            {
+                "name": "step",
+                "description": "Gradual step increases",
+                "parameters": ["initial_users", "step_size", "step_duration", "max_users"]
+            }
+        ]
+    }
+
+@app.get("/metrics/current")
+async def get_current_metrics():
+    """Get current system metrics"""
+    try:
+        k8s_metrics = await k8s_manager.get_pod_metrics()
+        traffic_metrics = traffic_generator.get_current_stats()
+        
+        return {
+            "kubernetes_metrics": k8s_metrics,
+            "traffic_metrics": traffic_metrics,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Failed to get metrics: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Metrics collection failed: {str(e)}")
+
+async def run_traffic_generation(task_id: str, pattern: TrafficPattern):
+    """Background task to run traffic generation"""
+    try:
+        background_tasks_status[task_id]["status"] = "running"
+        
+        result = await traffic_generator.start_traffic(task_id, pattern)
+        
+        background_tasks_status[task_id]["status"] = "completed"
+        background_tasks_status[task_id]["result"] = result
+        background_tasks_status[task_id]["end_time"] = datetime.utcnow().isoformat()
+        
+    except Exception as e:
+        logger.error(f"Traffic generation task {task_id} failed: {str(e)}")
+        background_tasks_status[task_id]["status"] = "failed"
+        background_tasks_status[task_id]["error"] = str(e)
+        background_tasks_status[task_id]["end_time"] = datetime.utcnow().isoformat()
+
+@app.post("/hpa/observe/start")
+async def start_hpa_observation(
+    background_tasks: BackgroundTasks,
+    duration_minutes: int = 60
+):
+    """Start observing HPA behavior"""
+    if hpa_observer.is_collecting:
+        return {"status": "already_running", "message": "HPA observation already in progress"}
+    
+    background_tasks.add_task(
+        hpa_observer.observe_hpa,
+        get_state_vector,
+        duration_minutes
+    )
+    
+    return {
+        "status": "started",
+        "message": f"HPA observation started for {duration_minutes} minutes",
+        "expected_samples": duration_minutes * 2
+    }
+
+@app.post("/hpa/observe/stop")
+async def stop_hpa_observation():
+    """Stop HPA observation"""
+    hpa_observer.stop_collection()
+    filepath = hpa_observer.save_observations()
+    
+    return {
+        "status": "stopped",
+        "observations_collected": len(hpa_observer.observations),
+        "saved_to": filepath
+    }
+
+@app.get("/hpa/observe/status")
+async def get_hpa_observation_status():
+    """Get HPA observation status"""
+    return {
+        "is_collecting": hpa_observer.is_collecting,
+        "observations_collected": len(hpa_observer.observations),
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+@app.get("/hpa/observations/list")
+async def list_hpa_observations():
+    """List saved observation files"""
+    files = os.listdir(hpa_observer.data_dir)
+    observation_files = [f for f in files if f.endswith('.json')]
+    
+    return {
+        "files": observation_files,
+        "count": len(observation_files),
+        "data_dir": hpa_observer.data_dir
+    }
+
+@app.post("/ppo/train/from_hpa")
+async def train_ppo_from_hpa_data(
+    background_tasks: BackgroundTasks,
+    observation_file: str,
+    bc_epochs: int = 50,
+    rl_timesteps: int = 10000
+):
+    """Train PPO from HPA observations"""
+    try:
+        filepath = f"data/hpa_observations/{observation_file}"
+        
+        if not os.path.exists(filepath):
+            raise HTTPException(status_code=404, detail=f"Observation file not found: {filepath}")
+        
+        # Run training in background
+        background_tasks.add_task(
+            imitation_trainer.train_from_hpa_data,
+            filepath,
+            bc_epochs,
+            rl_timesteps
+        )
+        
+        return {
+            "status": "training_started",
+            "observation_file": observation_file,
+            "bc_epochs": bc_epochs,
+            "rl_timesteps": rl_timesteps,
+            "message": "PPO training from HPA data started in background"
+        }
+    except Exception as e:
+        logger.error(f"Training failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Training failed: {str(e)}")
+@app.post("/hybrid/start")
+async def start_hybrid_control(initial_ppo_confidence: float = 0.1):
+    """Start hybrid HPA+PPO control"""
+    global control_loop_task
+    
+    if control_loop_task and not control_loop_task.done():
+        return {"status": "error", "message": "Another control loop is running"}
+    
+    hybrid_controller.ppo_confidence = initial_ppo_confidence
+    control_loop_task = asyncio.create_task(
+        hybrid_controller.hybrid_control_loop(get_state_vector)
+    )
+    
+    return {
+        "status": "started",
+        "message": "Hybrid control loop started",
+        "initial_ppo_confidence": initial_ppo_confidence
+    }
+
+@app.post("/hybrid/stop")
+async def stop_hybrid_control():
+    """Stop hybrid control"""
+    hybrid_controller.stop()
+    
+    if control_loop_task:
+        await control_loop_task
+    
+    return {"status": "stopped", "message": "Hybrid control loop stopped"}
+
+@app.get("/hybrid/status")
+async def get_hybrid_status():
+    """Get hybrid controller status"""
+    return hybrid_controller.get_status()
+
+@app.post("/hybrid/set_confidence")
+async def set_ppo_confidence(confidence: float):
+    """Manually set PPO confidence level"""
+    if not 0 <= confidence <= 1:
+        raise HTTPException(status_code=400, detail="Confidence must be between 0 and 1")
+    
+    hybrid_controller.ppo_confidence = confidence
+    return {
+        "status": "updated",
+        "ppo_confidence": confidence
+    }
+@app.get("/monitoring/recent")
+async def get_recent_decisions(n: int = 50):
+    """Get recent scaling decisions"""
+    return {
+        "decisions": decision_monitor.get_recent_decisions(n),
+        "count": n
+    }
+
+@app.get("/monitoring/performance")
+async def get_performance_analysis(window: int = 100):
+    """Get performance analysis"""
+    return decision_monitor.analyze_performance(window)
+
+if __name__ == "__main__":
+    uvicorn.run(
+        "app.main:app",
+        host="0.0.0.0",
+        port=int(os.getenv("PORT", 8000)),
+        reload=True
+    )
