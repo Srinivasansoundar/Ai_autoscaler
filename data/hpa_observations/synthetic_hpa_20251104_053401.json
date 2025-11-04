@@ -1,0 +1,48 @@
+[
+  {
+    "timestamp": "2025-11-04T05:34:01.043212",
+    "current_state": {
+      "workload": {
+        "rps": 46.951001829872055,
+        "p95_latency_ms": 8.892114743453288,
+        "error_rate_pct": 1.6270998395684833,
+        "queue_length": 6.35777179397058
+      },
+      "infra": {
+        "pods_ready": 5,
+        "hpa_desired_replicas": 5,
+        "cpu_utilization_pct": 27.522913993372484,
+        "mem_utilization_pct": 22.01833119469799,
+        "node_count": 1,
+        "pod_cpu_request_cores": 0.1,
+        "pod_cpu_limit_cores": 0.5
+      },
+      "cost": {
+        "cost_per_min_usd": 0.0,
+        "spot_ratio": 0.0
+      },
+      "time": {
+        "minute_of_day_sin": 0.5263770831526997,
+        "minute_of_day_cos": -0.17504904915518238,
+        "day_of_week": 0
+      },
+      "scaling": {
+        "last_action_delta": 0,
+        "steps_since_action": 3
+      },
+      "trend": {
+        "cpu_slope": -2.386085235063198,
+        "rps_slope": -9.845559990084698,
+        "latency_slope": -19.737974596770318
+      }
+    },
+    "action_delta": -1,
+    "next_state": {
+      "workload": {
+        "rps": 46.951001829872055,
+        "p95_latency_ms": 9.781326217798616,
+        "error_rate_pct": 1.710625867473574,
+        "queue_length": 6.257137433436909
+      },
+      "infra": {
+        "pods_ready": 

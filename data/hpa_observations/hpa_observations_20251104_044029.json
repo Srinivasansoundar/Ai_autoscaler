@@ -1,0 +1,464 @@
+[
+  {
+    "timestamp": "2025-11-04T04:37:58.234467",
+    "current_state": {
+      "workload": {
+        "rps": 0.0,
+        "p95_latency_ms": 0.0,
+        "error_rate_pct": 0.0,
+        "queue_length": 0.0
+      },
+      "infra": {
+        "pods_ready": 5,
+        "hpa_desired_replicas": 5,
+        "cpu_utilization_pct": 50.07520720000001,
+        "mem_utilization_pct": 27.75390625,
+        "node_count": 1,
+        "pod_cpu_request_cores": 0.2,
+        "pod_cpu_limit_cores": 0.5
+      },
+      "cost": {
+        "cost_per_min_usd": 0.0,
+        "spot_ratio": 0.0
+      },
+      "time": {
+        "minute_of_day_sin": 0.9358290554459436,
+        "minute_of_day_cos": 0.3524542225355697,
+        "day_of_week": 1
+      },
+      "scaling": {
+        "last_action_delta": 0,
+        "steps_since_action": 0
+      },
+      "trend": {
+        "cpu_slope": 0.0,
+        "rps_slope": 0.0,
+        "latency_slope": 0.0
+      }
+    },
+    "action_delta": 0,
+    "next_state": {
+      "workload": {
+        "rps": 0.4,
+        "p95_latency_ms": 123000.0,
+        "error_rate_pct": 66.41221374045801,
+        "queue_length": 0.0
+      },
+      "infra": {
+        "pods_ready": 5,
+        "hpa_desired_replicas": 5,
+        "cpu_utilization_pct": 50.00747210000001,
+        "mem_utilization_pct": 28.4466552734375,
+        "node_count": 1,
+        "pod_cpu_request_cores": 0.2,
+        "pod_cpu_limit_cores": 0.5
+      },
+      "cost": {
+        "cost_per_min_usd": 0.0,
+        "spot_ratio": 0.0
+      },
+      "time": {
+        "minute_of_day_sin": 0.9366212437425032,
+        "minute_of_day_cos": 0.3503436110024647,
+        "day_of_week": 1
+      },
+      "scaling": {
+        "last_action_delta": 0,
+        "steps_since_action": 0
+      },
+      "trend": {
+        "cpu_slope": -0.06773510000000016,
+        "rps_slope": 0.4,
+        "latency_slope": 123000.0
+      }
+    },
+    "reward": -142.32442748091603,
+    "current_replicas": 5,
+    "hpa_desired": 5
+  },
+  {
+    "timestamp": "2025-11-04T04:38:28.487766",
+    "current_state": {
+      "workload": {
+        "rps": 0.4,
+        "p95_latency_ms": 123000.0,
+        "error_rate_pct": 66.41221374045801,
+        "queue_length": 0.0
+      },
+      "infra": {
+        "pods_ready": 5,
+        "hpa_desired_replicas": 5,
+        "cpu_utilization_pct": 50.00747210000001,
+        "mem_utilization_pct": 28.4466552734375,
+        "node_count": 1,
+        "pod_cpu_request_cores": 0.2,
+        "pod_cpu_limit_cores": 0.5
+      },
+      "cost": {
+        "cost_per_min_usd": 0.0,
+        "spot_ratio": 0.0
+      },
+      "time": {
+        "minute_of_day_sin": 0.9366212437425032,
+        "minute_of_day_cos": 0.3503436110024647,
+        "day_of_week": 1
+      },
+      "scaling": {
+        "last_action_delta": 0,
+        "steps_since_action": 0
+      },
+      "trend": {
+        "cpu_slope": 0.0,
+        "rps_slope": 0.0,
+        "latency_slope": 0.0
+      }
+    },
+    "action_delta": 0,
+    "next_state": {
+      "workload": {
+        "rps": 0.3,
+        "p95_latency_ms": 123000.0,
+        "error_rate_pct": 68.57142857142857,
+        "queue_length": 0.0
+      },
+      "infra": {
+        "pods_ready": 5,
+        "hpa_desired_replicas": 5,
+        "cpu_utilization_pct": 49.785802000000004,
+        "mem_utilization_pct": 28.812255859375004,
+        "node_count": 1,
+        "pod_cpu_request_cores": 0.2,
+        "pod_cpu_limit_cores": 0.5
+      },
+      "cost": {
+        "cost_per_min_usd": 0.0,
+        "spot_ratio": 0.0
+      },
+      "time": {
+        "minute_of_day_sin": 0.9373833453343953,
+        "minute_of_day_cos": 0.3482993882993449,
+        "day_of_week": 1
+      },
+      "scaling": {
+        "last_action_delta": 0,
+        "steps_since_action": 0
+      },
+      "trend": {
+        "cpu_slope": -0.23564919999999745,
+        "rps_slope": 0.09999999999999998,
+        "latency_slope": 0.0
+      }
+    },
+    "reward": -147.14285714285714,
+    "current_replicas": 5,
+    "hpa_desired": 5
+  },
+  {
+    "timestamp": "2025-11-04T04:38:58.813944",
+    "current_state": {
+      "workload": {
+        "rps": 0.3,
+        "p95_latency_ms": 123000.0,
+        "error_rate_pct": 68.57142857142857,
+        "queue_length": 0.0
+      },
+      "infra": {
+        "pods_ready": 5,
+        "hpa_desired_replicas": 5,
+        "cpu_utilization_pct": 49.785802000000004,
+        "mem_utilization_pct": 28.812255859375004,
+        "node_count": 1,
+        "pod_cpu_request_cores": 0.2,
+        "pod_cpu_limit_cores": 0.5
+      },
+      "cost": {
+        "cost_per_min_usd": 0.0,
+        "spot_ratio": 0.0
+      },
+      "time": {
+        "minute_of_day_sin": 0.9373833453343953,
+        "minute_of_day_cos": 0.3482993882993449,
+        "day_of_week": 1
+      },
+      "scaling": {
+        "last_action_delta": 0,
+        "steps_since_action": 0
+      },
+      "trend": {
+        "cpu_slope": 0.0,
+        "rps_slope": 0.0,
+        "latency_slope": 0.0
+      }
+    },
+    "action_delta": 0,
+    "next_state": {
+      "workload": {
+        "rps": 0.3,
+        "p95_latency_ms": 123000.0,
+        "error_rate_pct": 69.44444444444444,
+        "queue_length": 0.0
+      },
+      "infra": {
+        "pods_ready": 5,
+        "hpa_desired_replicas": 5,
+        "cpu_utilization_pct": 49.837093700000004,
+        "mem_utilization_pct": 28.919677734375,
+        "node_count": 1,
+        "pod_cpu_request_cores": 0.2,
+        "pod_cpu_limit_cores": 0.5
+      },
+      "cost": {
+        "cost_per_min_usd": 0.0,
+        "spot_ratio": 0.0
+      },
+      "time": {
+        "minute_of_day_sin": 0.9381409853140568,
+        "minute_of_day_cos": 0.3462535078146801,
+        "day_of_week": 1
+      },
+      "scaling": {
+        "last_action_delta": 0,
+        "steps_since_action": 0
+      },
+      "trend": {
+        "cpu_slope": 0.05129170000000016,
+        "rps_slope": 0.0,
+        "latency_slope": 0.0
+      }
+    },
+    "reward": -148.88888888888889,
+    "current_replicas": 5,
+    "hpa_desired": 5
+  },
+  {
+    "timestamp": "2025-11-04T04:39:29.098264",
+    "current_state": {
+      "workload": {
+        "rps": 0.3,
+        "p95_latency_ms": 123000.0,
+        "error_rate_pct": 69.44444444444444,
+        "queue_length": 0.0
+      },
+      "infra": {
+        "pods_ready": 5,
+        "hpa_desired_replicas": 5,
+        "cpu_utilization_pct": 49.837093700000004,
+        "mem_utilization_pct": 28.919677734375,
+        "node_count": 1,
+        "pod_cpu_request_cores": 0.2,
+        "pod_cpu_limit_cores": 0.5
+      },
+      "cost": {
+        "cost_per_min_usd": 0.0,
+        "spot_ratio": 0.0
+      },
+      "time": {
+        "minute_of_day_sin": 0.9381409853140568,
+        "minute_of_day_cos": 0.3462535078146801,
+        "day_of_week": 1
+      },
+      "scaling": {
+        "last_action_delta": 0,
+        "steps_since_action": 0
+      },
+      "trend": {
+        "cpu_slope": 0.0,
+        "rps_slope": 0.0,
+        "latency_slope": 0.0
+      }
+    },
+    "action_delta": 0,
+    "next_state": {
+      "workload": {
+        "rps": 0.3,
+        "p95_latency_ms": 123000.0,
+        "error_rate_pct": 69.44444444444444,
+        "queue_length": 0.0
+      },
+      "infra": {
+        "pods_ready": 5,
+        "hpa_desired_replicas": 5,
+        "cpu_utilization_pct": 49.982706199999996,
+        "mem_utilization_pct": 28.931884765625,
+        "node_count": 1,
+        "pod_cpu_request_cores": 0.2,
+        "pod_cpu_limit_cores": 0.5
+      },
+      "cost": {
+        "cost_per_min_usd": 0.0,
+        "spot_ratio": 0.0
+      },
+      "time": {
+        "minute_of_day_sin": 0.9389191889578805,
+        "minute_of_day_cos": 0.3441377000659415,
+        "day_of_week": 1
+      },
+      "scaling": {
+        "last_action_delta": 0,
+        "steps_since_action": 0
+      },
+      "trend": {
+        "cpu_slope": 0.14561249999999148,
+        "rps_slope": 0.0,
+        "latency_slope": 0.0
+      }
+    },
+    "reward": -148.88888888888889,
+    "current_replicas": 5,
+    "hpa_desired": 5
+  },
+  {
+    "timestamp": "2025-11-04T04:39:59.336159",
+    "current_state": {
+      "workload": {
+        "rps": 0.3,
+        "p95_latency_ms": 123000.0,
+        "error_rate_pct": 69.44444444444444,
+        "queue_length": 0.0
+      },
+      "infra": {
+        "pods_ready": 5,
+        "hpa_desired_replicas": 5,
+        "cpu_utilization_pct": 49.982706199999996,
+        "mem_utilization_pct": 28.931884765625,
+        "node_count": 1,
+        "pod_cpu_request_cores": 0.2,
+        "pod_cpu_limit_cores": 0.5
+      },
+      "cost": {
+        "cost_per_min_usd": 0.0,
+        "spot_ratio": 0.0
+      },
+      "time": {
+        "minute_of_day_sin": 0.9389191889578805,
+        "minute_of_day_cos": 0.3441377000659415,
+        "day_of_week": 1
+      },
+      "scaling": {
+        "last_action_delta": 0,
+        "steps_since_action": 0
+      },
+      "trend": {
+        "cpu_slope": 0.0,
+        "rps_slope": 0.0,
+        "latency_slope": 0.0
+      }
+    },
+    "action_delta": 0,
+    "next_state": {
+      "workload": {
+        "rps": 0.3,
+        "p95_latency_ms": 123000.0,
+        "error_rate_pct": 69.44444444444444,
+        "queue_length": 0.0
+      },
+      "infra": {
+        "pods_ready": 5,
+        "hpa_desired_replicas": 5,
+        "cpu_utilization_pct": 50.054111899999995,
+        "mem_utilization_pct": 28.937377929687504,
+        "node_count": 1,
+        "pod_cpu_request_cores": 0.2,
+        "pod_cpu_limit_cores": 0.5
+      },
+      "cost": {
+        "cost_per_min_usd": 0.0,
+        "spot_ratio": 0.0
+      },
+      "time": {
+        "minute_of_day_sin": 0.9396677458944447,
+        "minute_of_day_cos": 0.3420884787970115,
+        "day_of_week": 1
+      },
+      "scaling": {
+        "last_action_delta": 0,
+        "steps_since_action": 0
+      },
+      "trend": {
+        "cpu_slope": 0.07140569999999968,
+        "rps_slope": 0.0,
+        "latency_slope": 0.0
+      }
+    },
+    "reward": -148.38888888888889,
+    "current_replicas": 5,
+    "hpa_desired": 5
+  },
+  {
+    "timestamp": "2025-11-04T04:40:29.576578",
+    "current_state": {
+      "workload": {
+        "rps": 0.3,
+        "p95_latency_ms": 123000.0,
+        "error_rate_pct": 69.44444444444444,
+        "queue_length": 0.0
+      },
+      "infra": {
+        "pods_ready": 5,
+        "hpa_desired_replicas": 5,
+        "cpu_utilization_pct": 50.054111899999995,
+        "mem_utilization_pct": 28.937377929687504,
+        "node_count": 1,
+        "pod_cpu_request_cores": 0.2,
+        "pod_cpu_limit_cores": 0.5
+      },
+      "cost": {
+        "cost_per_min_usd": 0.0,
+        "spot_ratio": 0.0
+      },
+      "time": {
+        "minute_of_day_sin": 0.9396677458944447,
+        "minute_of_day_cos": 0.3420884787970115,
+        "day_of_week": 1
+      },
+      "scaling": {
+        "last_action_delta": 0,
+        "steps_since_action": 0
+      },
+      "trend": {
+        "cpu_slope": 0.0,
+        "rps_slope": 0.0,
+        "latency_slope": 0.0
+      }
+    },
+    "action_delta": 0,
+    "next_state": {
+      "workload": {
+        "rps": 0.3,
+        "p95_latency_ms": 123000.0,
+        "error_rate_pct": 69.44444444444444,
+        "queue_length": 0.0
+      },
+      "infra": {
+        "pods_ready": 5,
+        "hpa_desired_replicas": 5,
+        "cpu_utilization_pct": 49.988398700000005,
+        "mem_utilization_pct": 28.9471435546875,
+        "node_count": 1,
+        "pod_cpu_request_cores": 0.2,
+        "pod_cpu_limit_cores": 0.5
+      },
+      "cost": {
+        "cost_per_min_usd": 0.0,
+        "spot_ratio": 0.0
+      },
+      "time": {
+        "minute_of_day_sin": 0.9404118303458421,
+        "minute_of_day_cos": 0.3400376293082622,
+        "day_of_week": 1
+      },
+      "scaling": {
+        "last_action_delta": 0,
+        "steps_since_action": 0
+      },
+      "trend": {
+        "cpu_slope": -0.06571319999999048,
+        "rps_slope": 0.0,
+        "latency_slope": 0.0
+      }
+    },
+    "reward": -148.88888888888889,
+    "current_replicas": 5,
+    "hpa_desired": 5
+  }
+]

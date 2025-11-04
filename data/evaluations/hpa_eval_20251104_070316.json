@@ -1,0 +1,36 @@
+{
+  "strategy": "hpa",
+  "samples": 10,
+  "latency": {
+    "mean": 58.4,
+    "median": 35.5,
+    "p95": 210.0,
+    "max": 210.0,
+    "min": 17.0,
+    "stdev": 59.320597884152626
+  },
+  "cpu_utilization": {
+    "mean": 31.1957827,
+    "median": 35.3443265,
+    "max": 37.66550349999999,
+    "min": 0.28950299999999995
+  },
+  "error_rate": {
+    "mean": 0.0,
+    "max": 0.0,
+    "total_errors_pct": 0.0
+  },
+  "resource_efficiency": {
+    "avg_pods": 1.8,
+    "max_pods": 2,
+    "min_pods": 1,
+    "pod_changes": 1,
+    "stability_score": 90.0
+  },
+  "sla": {
+    "compliance_pct": 100.0,
+    "violations": 0,
+    "total_samples": 10
+  },
+  "overall_score": 95.49
+}

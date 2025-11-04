@@ -1,34 +1,94 @@
-# app/state_adapter.py
 import math
 from datetime import datetime, timezone
 
+
 def parse_cpu_cores(val: str) -> float:
+    """Parse CPU value to cores"""
     if not val:
         return 0.0
-
+    
     v = val.strip().lower()
     
+    # Handle millicores (m) - most common
     if v.endswith("m"):
-        return float(v[:-1]) / 1000.0
+        try:
+            return float(v[:-1]) / 1000.0
+        except ValueError:
+            return 0.0
+    
+    # Handle microcores (u)
+    elif v.endswith("u"):
+        try:
+            return float(v[:-1]) / 1_000_000.0
+        except ValueError:
+            return 0.0
+    
+    # Handle nanocores (n)
     elif v.endswith("n"):
-        return float(v[:-1]) / 1_000_000_000.0
+        try:
+            return float(v[:-1]) / 1_000_000_000.0
+        except ValueError:
+            return 0.0
+    
+    # No suffix means full cores
     else:
-        return float(v)
+        try:
+            return float(v)
+        except ValueError:
+            return 0.0
+
 
 def parse_mem_mebibytes(val: str) -> float:
+    """Parse memory value to MiB
+    
+    Handles:
+    - Binary units: Ki, Mi, Gi, Ti, Pi
+    - Decimal units: k, M, G, T
+    - Bytes: u suffix or no suffix
+    """
     if not val:
         return 0.0
+    
     v = val.strip().lower()
     mult = 1.0
-    if v.endswith("ki"): mult, v = 1/1024, v[:-2]
-    elif v.endswith("mi"): mult, v = 1.0, v[:-2]
-    elif v.endswith("gi"): mult, v = 1024.0, v[:-2]
-    elif v.endswith("ti"): mult, v = 1024.0*1024.0, v[:-2]
-    elif v.endswith("k"): mult, v = 1/1024, v[:-1]
-    elif v.endswith("m"): mult, v = 1.0, v[:-1]
-    elif v.endswith("g"): mult, v = 1024.0, v[:-1]
-    return float(v) * mult
-
+    
+    # Handle binary units (IEC standard: powers of 1024)
+    if v.endswith("ki"):
+        mult, v = 1/1024, v[:-2]          # KiB -> MiB
+    elif v.endswith("mi"):
+        mult, v = 1.0, v[:-2]             # MiB -> MiB
+    elif v.endswith("gi"):
+        mult, v = 1024.0, v[:-2]          # GiB -> MiB
+    elif v.endswith("ti"):
+        mult, v = 1024.0*1024.0, v[:-2]   # TiB -> MiB
+    elif v.endswith("pi"):
+        mult, v = 1024.0*1024.0*1024.0, v[:-2]  # PiB -> MiB
+    
+    # Handle decimal units (SI standard: powers of 1000)
+    elif v.endswith("k") and len(v) > 1 and v[-2] != 'i':
+        mult, v = 1/1024, v[:-1]          # kB -> MiB (approx)
+    elif v.endswith("m") and len(v) > 1 and v[-2] != 'i':
+        mult, v = 1.0, v[:-1]             # MB -> MiB (approx)
+    elif v.endswith("g") and len(v) > 1 and v[-2] != 'i':
+        mult, v = 1024.0, v[:-1]          # GB -> MiB (approx)
+    elif v.endswith("t") and len(v) > 1 and v[-2] != 'i':
+        mult, v = 1024.0*1024.0, v[:-1]   # TB -> MiB (approx)
+    
+    # Handle bytes (explicit 'u' or no suffix)
+    elif v.endswith("u"):
+        mult, v = 1/(1024*1024), v[:-1]   # Bytes -> MiB
+    else:
+        # No suffix - assume bytes
+        try:
+            float(v)
+            mult = 1/(1024*1024)          # Bytes -> MiB
+        except ValueError:
+            return 0.0
+    
+    try:
+        return float(v) * mult
+    except ValueError:
+        return 0.0
 
 def build_state_vector(
     locust_agg: dict,
@@ -62,9 +122,12 @@ def build_state_vector(
         mem_r = parse_mem_mebibytes(pm.get("memory_requests"))
         cpu_l = parse_cpu_cores(pm.get("cpu_limits"))
         mem_l = parse_mem_mebibytes(pm.get("memory_limits"))
-        total_cpu_usage += cpu_u; total_mem_usage += mem_u
-        total_cpu_req += cpu_r;   total_mem_req += mem_r
-        total_cpu_lim += cpu_l;   total_mem_lim += mem_l
+        total_cpu_usage += cpu_u
+        total_mem_usage += mem_u
+        total_cpu_req += cpu_r
+        total_mem_req += mem_r
+        total_cpu_lim += cpu_l
+        total_mem_lim += mem_l
 
     cpu_den = total_cpu_req if total_cpu_req > 0 else (total_cpu_lim if total_cpu_lim > 0 else 1e-6)
     mem_den = total_mem_req if total_mem_req > 0 else (total_mem_lim if total_mem_lim > 0 else 1e-6)
@@ -131,4 +194,6 @@ def build_state_vector(
             "latency_slope": latency_slope
         }
     }
+
+# Global variable to store previous metrics
 

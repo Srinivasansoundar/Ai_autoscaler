@@ -1,0 +1,464 @@
+[
+  {
+    "timestamp": "2025-11-04T04:30:13.423783",
+    "current_state": {
+      "workload": {
+        "rps": 2.5,
+        "p95_latency_ms": 5700.0,
+        "error_rate_pct": 0.0,
+        "queue_length": 0.0
+      },
+      "infra": {
+        "pods_ready": 5,
+        "hpa_desired_replicas": 5,
+        "cpu_utilization_pct": 32.765404499999995,
+        "mem_utilization_pct": 10.108642578125,
+        "node_count": 1,
+        "pod_cpu_request_cores": 0.2,
+        "pod_cpu_limit_cores": 0.5
+      },
+      "cost": {
+        "cost_per_min_usd": 0.0,
+        "spot_ratio": 0.0
+      },
+      "time": {
+        "minute_of_day_sin": 0.9234057246973855,
+        "minute_of_day_cos": 0.38382530869667303,
+        "day_of_week": 1
+      },
+      "scaling": {
+        "last_action_delta": 0,
+        "steps_since_action": 0
+      },
+      "trend": {
+        "cpu_slope": 0.0,
+        "rps_slope": 0.0,
+        "latency_slope": 0.0
+      }
+    },
+    "action_delta": 0,
+    "next_state": {
+      "workload": {
+        "rps": 3.1,
+        "p95_latency_ms": 18000.0,
+        "error_rate_pct": 0.0,
+        "queue_length": 0.0
+      },
+      "infra": {
+        "pods_ready": 5,
+        "hpa_desired_replicas": 5,
+        "cpu_utilization_pct": 50.10573400000001,
+        "mem_utilization_pct": 15.823974609375,
+        "node_count": 1,
+        "pod_cpu_request_cores": 0.2,
+        "pod_cpu_limit_cores": 0.5
+      },
+      "cost": {
+        "cost_per_min_usd": 0.0,
+        "spot_ratio": 0.0
+      },
+      "time": {
+        "minute_of_day_sin": 0.9242409034149138,
+        "minute_of_day_cos": 0.3818098380801417,
+        "day_of_week": 1
+      },
+      "scaling": {
+        "last_action_delta": 0,
+        "steps_since_action": 0
+      },
+      "trend": {
+        "cpu_slope": -0.10083679999998196,
+        "rps_slope": -0.8999999999999999,
+        "latency_slope": 2000.0
+      }
+    },
+    "reward": -8.5,
+    "current_replicas": 5,
+    "hpa_desired": 5
+  },
+  {
+    "timestamp": "2025-11-04T04:30:43.668915",
+    "current_state": {
+      "workload": {
+        "rps": 3.1,
+        "p95_latency_ms": 18000.0,
+        "error_rate_pct": 0.0,
+        "queue_length": 0.0
+      },
+      "infra": {
+        "pods_ready": 5,
+        "hpa_desired_replicas": 5,
+        "cpu_utilization_pct": 50.10573400000001,
+        "mem_utilization_pct": 15.823974609375,
+        "node_count": 1,
+        "pod_cpu_request_cores": 0.2,
+        "pod_cpu_limit_cores": 0.5
+      },
+      "cost": {
+        "cost_per_min_usd": 0.0,
+        "spot_ratio": 0.0
+      },
+      "time": {
+        "minute_of_day_sin": 0.9242409034149138,
+        "minute_of_day_cos": 0.3818098380801417,
+        "day_of_week": 1
+      },
+      "scaling": {
+        "last_action_delta": 0,
+        "steps_since_action": 0
+      },
+      "trend": {
+        "cpu_slope": 0.0,
+        "rps_slope": 0.0,
+        "latency_slope": 0.0
+      }
+    },
+    "action_delta": 0,
+    "next_state": {
+      "workload": {
+        "rps": 5.1,
+        "p95_latency_ms": 19000.0,
+        "error_rate_pct": 0.0,
+        "queue_length": 0.0
+      },
+      "infra": {
+        "pods_ready": 5,
+        "hpa_desired_replicas": 5,
+        "cpu_utilization_pct": 28.732993299999993,
+        "mem_utilization_pct": 13.545532226562502,
+        "node_count": 1,
+        "pod_cpu_request_cores": 0.2,
+        "pod_cpu_limit_cores": 0.5
+      },
+      "cost": {
+        "cost_per_min_usd": 0.0,
+        "spot_ratio": 0.0
+      },
+      "time": {
+        "minute_of_day_sin": 0.9250716830735736,
+        "minute_of_day_cos": 0.3797925501842102,
+        "day_of_week": 1
+      },
+      "scaling": {
+        "last_action_delta": 0,
+        "steps_since_action": 0
+      },
+      "trend": {
+        "cpu_slope": -21.262409199999997,
+        "rps_slope": 0.0,
+        "latency_slope": 0.0
+      }
+    },
+    "reward": -10.5,
+    "current_replicas": 5,
+    "hpa_desired": 5
+  },
+  {
+    "timestamp": "2025-11-04T04:31:13.931723",
+    "current_state": {
+      "workload": {
+        "rps": 5.1,
+        "p95_latency_ms": 19000.0,
+        "error_rate_pct": 0.0,
+        "queue_length": 0.0
+      },
+      "infra": {
+        "pods_ready": 5,
+        "hpa_desired_replicas": 5,
+        "cpu_utilization_pct": 28.732993299999993,
+        "mem_utilization_pct": 13.545532226562502,
+        "node_count": 1,
+        "pod_cpu_request_cores": 0.2,
+        "pod_cpu_limit_cores": 0.5
+      },
+      "cost": {
+        "cost_per_min_usd": 0.0,
+        "spot_ratio": 0.0
+      },
+      "time": {
+        "minute_of_day_sin": 0.9250716830735736,
+        "minute_of_day_cos": 0.3797925501842102,
+        "day_of_week": 1
+      },
+      "scaling": {
+        "last_action_delta": 0,
+        "steps_since_action": 0
+      },
+      "trend": {
+        "cpu_slope": 0.0,
+        "rps_slope": 0.0,
+        "latency_slope": 0.0
+      }
+    },
+    "action_delta": 0,
+    "next_state": {
+      "workload": {
+        "rps": 2.7,
+        "p95_latency_ms": 11000.0,
+        "error_rate_pct": 0.0,
+        "queue_length": 0.0
+      },
+      "infra": {
+        "pods_ready": 5,
+        "hpa_desired_replicas": 5,
+        "cpu_utilization_pct": 49.8736539,
+        "mem_utilization_pct": 14.472656249999998,
+        "node_count": 1,
+        "pod_cpu_request_cores": 0.2,
+        "pod_cpu_limit_cores": 0.5
+      },
+      "cost": {
+        "cost_per_min_usd": 0.0,
+        "spot_ratio": 0.0
+      },
+      "time": {
+        "minute_of_day_sin": 0.9258980597191482,
+        "minute_of_day_cos": 0.37777345461045386,
+        "day_of_week": 1
+      },
+      "scaling": {
+        "last_action_delta": 0,
+        "steps_since_action": 0
+      },
+      "trend": {
+        "cpu_slope": 21.140660600000007,
+        "rps_slope": -2.3999999999999995,
+        "latency_slope": -8000.0
+      }
+    },
+    "reward": -9.0,
+    "current_replicas": 5,
+    "hpa_desired": 5
+  },
+  {
+    "timestamp": "2025-11-04T04:31:44.153457",
+    "current_state": {
+      "workload": {
+        "rps": 2.7,
+        "p95_latency_ms": 11000.0,
+        "error_rate_pct": 0.0,
+        "queue_length": 0.0
+      },
+      "infra": {
+        "pods_ready": 5,
+        "hpa_desired_replicas": 5,
+        "cpu_utilization_pct": 49.8736539,
+        "mem_utilization_pct": 14.472656249999998,
+        "node_count": 1,
+        "pod_cpu_request_cores": 0.2,
+        "pod_cpu_limit_cores": 0.5
+      },
+      "cost": {
+        "cost_per_min_usd": 0.0,
+        "spot_ratio": 0.0
+      },
+      "time": {
+        "minute_of_day_sin": 0.9259255297316928,
+        "minute_of_day_cos": 0.3777061204045865,
+        "day_of_week": 1
+      },
+      "scaling": {
+        "last_action_delta": 0,
+        "steps_since_action": 0
+      },
+      "trend": {
+        "cpu_slope": 0.0,
+        "rps_slope": 0.0,
+        "latency_slope": 0.0
+      }
+    },
+    "action_delta": 0,
+    "next_state": {
+      "workload": {
+        "rps": 4.2,
+        "p95_latency_ms": 20000.0,
+        "error_rate_pct": 0.0,
+        "queue_length": 0.0
+      },
+      "infra": {
+        "pods_ready": 5,
+        "hpa_desired_replicas": 5,
+        "cpu_utilization_pct": 49.8245557,
+        "mem_utilization_pct": 15.0970458984375,
+        "node_count": 1,
+        "pod_cpu_request_cores": 0.2,
+        "pod_cpu_limit_cores": 0.5
+      },
+      "cost": {
+        "cost_per_min_usd": 0.0,
+        "spot_ratio": 0.0
+      },
+      "time": {
+        "minute_of_day_sin": 0.9267473524652166,
+        "minute_of_day_cos": 0.3756851669932041,
+        "day_of_week": 1
+      },
+      "scaling": {
+        "last_action_delta": 0,
+        "steps_since_action": 0
+      },
+      "trend": {
+        "cpu_slope": 0.000812699999997335,
+        "rps_slope": 0.20000000000000018,
+        "latency_slope": 0.0
+      }
+    },
+    "reward": -9.0,
+    "current_replicas": 5,
+    "hpa_desired": 5
+  },
+  {
+    "timestamp": "2025-11-04T04:32:14.368599",
+    "current_state": {
+      "workload": {
+        "rps": 4.2,
+        "p95_latency_ms": 20000.0,
+        "error_rate_pct": 0.0,
+        "queue_length": 0.0
+      },
+      "infra": {
+        "pods_ready": 5,
+        "hpa_desired_replicas": 5,
+        "cpu_utilization_pct": 49.8245557,
+        "mem_utilization_pct": 15.0970458984375,
+        "node_count": 1,
+        "pod_cpu_request_cores": 0.2,
+        "pod_cpu_limit_cores": 0.5
+      },
+      "cost": {
+        "cost_per_min_usd": 0.0,
+        "spot_ratio": 0.0
+      },
+      "time": {
+        "minute_of_day_sin": 0.9267473524652166,
+        "minute_of_day_cos": 0.3756851669932041,
+        "day_of_week": 1
+      },
+      "scaling": {
+        "last_action_delta": 0,
+        "steps_since_action": 0
+      },
+      "trend": {
+        "cpu_slope": 0.0,
+        "rps_slope": 0.0,
+        "latency_slope": 0.0
+      }
+    },
+    "action_delta": 0,
+    "next_state": {
+      "workload": {
+        "rps": 3.7,
+        "p95_latency_ms": 19000.0,
+        "error_rate_pct": 0.0,
+        "queue_length": 0.0
+      },
+      "infra": {
+        "pods_ready": 5,
+        "hpa_desired_replicas": 5,
+        "cpu_utilization_pct": 49.9923632,
+        "mem_utilization_pct": 15.345458984374998,
+        "node_count": 1,
+        "pod_cpu_request_cores": 0.2,
+        "pod_cpu_limit_cores": 0.5
+      },
+      "cost": {
+        "cost_per_min_usd": 0.0,
+        "spot_ratio": 0.0
+      },
+      "time": {
+        "minute_of_day_sin": 0.9275647642100632,
+        "minute_of_day_cos": 0.37366242545368394,
+        "day_of_week": 1
+      },
+      "scaling": {
+        "last_action_delta": 0,
+        "steps_since_action": 0
+      },
+      "trend": {
+        "cpu_slope": 0.1678075000000021,
+        "rps_slope": -1.2000000000000002,
+        "latency_slope": -2000.0
+      }
+    },
+    "reward": -9.0,
+    "current_replicas": 5,
+    "hpa_desired": 5
+  },
+  {
+    "timestamp": "2025-11-04T04:32:44.587512",
+    "current_state": {
+      "workload": {
+        "rps": 3.7,
+        "p95_latency_ms": 19000.0,
+        "error_rate_pct": 0.0,
+        "queue_length": 0.0
+      },
+      "infra": {
+        "pods_ready": 5,
+        "hpa_desired_replicas": 5,
+        "cpu_utilization_pct": 49.9923632,
+        "mem_utilization_pct": 15.345458984374998,
+        "node_count": 1,
+        "pod_cpu_request_cores": 0.2,
+        "pod_cpu_limit_cores": 0.5
+      },
+      "cost": {
+        "cost_per_min_usd": 0.0,
+        "spot_ratio": 0.0
+      },
+      "time": {
+        "minute_of_day_sin": 0.9275647642100632,
+        "minute_of_day_cos": 0.37366242545368394,
+        "day_of_week": 1
+      },
+      "scaling": {
+        "last_action_delta": 0,
+        "steps_since_action": 0
+      },
+      "trend": {
+        "cpu_slope": 0.0,
+        "rps_slope": 0.0,
+        "latency_slope": 0.0
+      }
+    },
+    "action_delta": 0,
+    "next_state": {
+      "workload": {
+        "rps": 4.7,
+        "p95_latency_ms": 18000.0,
+        "error_rate_pct": 0.0,
+        "queue_length": 0.0
+      },
+      "infra": {
+        "pods_ready": 5,
+        "hpa_desired_replicas": 5,
+        "cpu_utilization_pct": 50.11871960000002,
+        "mem_utilization_pct": 15.472412109375,
+        "node_count": 1,
+        "pod_cpu_request_cores": 0.2,
+        "pod_cpu_limit_cores": 0.5
+      },
+      "cost": {
+        "cost_per_min_usd": 0.0,
+        "spot_ratio": 0.0
+      },
+      "time": {
+        "minute_of_day_sin": 0.9283777610756428,
+        "minute_of_day_cos": 0.37163790541355785,
+        "day_of_week": 1
+      },
+      "scaling": {
+        "last_action_delta": 0,
+        "steps_since_action": 0
+      },
+      "trend": {
+        "cpu_slope": 0.12635640000002013,
+        "rps_slope": 1.0,
+        "latency_slope": -1000.0
+      }
+    },
+    "reward": -8.5,
+    "current_replicas": 5,
+    "hpa_desired": 5
+  }
+]

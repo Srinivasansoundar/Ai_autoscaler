@@ -12,6 +12,7 @@ import asyncio
 import logging
 from datetime import datetime, timedelta
 import uvicorn
+from typing import Dict, Any, List, Optional
 from .ppo_agent import PPOScalingAgent
 from .scaling_controller import ScalingController
 from .state_adapter import build_state_vector
@@ -54,7 +55,10 @@ hybrid_controller = HybridController(k8s_manager, ppo_agent, scaling_controller,
 control_loop_task = None
 # Background task storage
 background_tasks_status = {}
+previous_metrics = None
+from .dataset_generator import SyntheticDatasetGenerator
 
+dataset_generator = SyntheticDatasetGenerator()
 # Add helper function to extract Locust aggregated stats
 def _extract_aggregated(locust_stats_for_task: dict) -> dict:
     """Extract aggregated stats from Locust response"""
@@ -125,9 +129,54 @@ def _extract_aggregated(locust_stats_for_task: dict) -> dict:
             "ninetieth_response_time": p90,
         }
     return agg or {}
+# @app.get("/state/vector")
+# async def get_state_vector():
+#     """Get current state vector for PPO"""
+#     try:
+#         # 1) Workload: Locust stats
+#         locust_all = traffic_generator.get_current_stats()
+#         agg = {}
+#         if locust_all:
+#             any_task_id = next(iter(locust_all.keys()))
+#             agg = _extract_aggregated(locust_all.get(any_task_id, {}))
+
+#         # 2) Infra: deployment/pod metrics
+#         deploy_status = await k8s_manager.get_deployment_status()
+#         pods = await k8s_manager.get_pod_metrics()
+
+#         # 3) HPA desired + node count
+#         try:
+#             hpa_desired = await k8s_manager.get_hpa_desired(name="php-apache-hpa", namespace="default")
+#         except Exception:
+#             hpa_desired = getattr(deploy_status, "desired_replicas", 1)
+        
+#         try:
+#             node_count = await k8s_manager.get_node_count()
+#         except Exception:
+#             node_count = 1
+
+#         previous_metrics = getattr(scaling_controller, 'prev_metrics', None)
+
+#         # 4) Build state vector passing previous_metrics for slope calc
+#         state = build_state_vector(
+#             locust_agg=agg,
+#             pod_metrics=[pm.dict() if hasattr(pm, "dict") else pm.__dict__ for pm in pods],
+#             deploy_status=deploy_status.dict() if hasattr(deploy_status, "dict") else deploy_status.__dict__,
+#             hpa_desired=hpa_desired,
+#             node_count=node_count,
+#             last_action_delta=scaling_controller.last_action_delta,
+#             steps_since_action=scaling_controller.steps_since_action,
+#             previous_metrics=previous_metrics
+#         )
+#         return state
+
+#     except Exception as e:
+#         logger.error(f"Failed to get state vector: {str(e)}")
+#         raise HTTPException(status_code=500, detail="State vector generation fail")
+
 @app.get("/state/vector")
 async def get_state_vector():
-    """Get current state vector for PPO"""
+    global previous_metrics
     try:
         # 1) Workload: Locust stats
         locust_all = traffic_generator.get_current_stats()
@@ -143,17 +192,18 @@ async def get_state_vector():
         # 3) HPA desired + node count
         try:
             hpa_desired = await k8s_manager.get_hpa_desired(name="php-apache-hpa", namespace="default")
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Error getting HPA desired: {e}")
             hpa_desired = getattr(deploy_status, "desired_replicas", 1)
         
         try:
             node_count = await k8s_manager.get_node_count()
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Error getting node count: {e}")
             node_count = 1
 
-        previous_metrics = getattr(scaling_controller, 'prev_metrics', None)
-
-        # 4) Build state vector passing previous_metrics for slope calc
+        # 4) Build state vector with previous_metrics for trend calculation
+        # The build_state_vector function will compute trends internally
         state = build_state_vector(
             locust_agg=agg,
             pod_metrics=[pm.dict() if hasattr(pm, "dict") else pm.__dict__ for pm in pods],
@@ -164,11 +214,21 @@ async def get_state_vector():
             steps_since_action=scaling_controller.steps_since_action,
             previous_metrics=previous_metrics
         )
+
+        # 5) Update previous_metrics for next call
+        # Store the CURRENT values that were just calculated
+        previous_metrics = {
+            'cpu_util_pct': state['infra']['cpu_utilization_pct'],
+            'rps': state['workload']['rps'],
+            'p95_latency_ms': state['workload']['p95_latency_ms']
+        }
+
         return state
 
     except Exception as e:
         logger.error(f"Failed to get state vector: {str(e)}")
-        raise HTTPException(status_code=500, detail="State vector generation fail")
+        raise HTTPException(status_code=500, detail=f"State vector generation fail: {str(e)}")
+
 
 # Add PPO control endpoints
 @app.post("/ppo/start")
@@ -555,6 +615,133 @@ async def get_recent_decisions(n: int = 50):
 async def get_performance_analysis(window: int = 100):
     """Get performance analysis"""
     return decision_monitor.analyze_performance(window)
+
+@app.post("/dataset/generate")
+async def generate_synthetic_dataset(
+    num_samples: int = 1000,
+    filename: str = None
+):
+    """Generate synthetic HPA dataset for training"""
+    if not filename:
+        filename = f"synthetic_hpa_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+    
+    generated_file = dataset_generator.generate_dataset(num_samples, filename)
+    
+    return {
+        "status": "success",
+        "filename": generated_file,
+        "samples": num_samples,
+        "path": f"data/hpa_observations/{generated_file}"
+    }
+@app.post("/dataset/generate_custom")
+async def generate_custom_dataset(
+    num_samples: int = 1000,
+    filename: str = None,
+    low_weight: float = 0.2,
+    medium_weight: float = 0.4,
+    high_weight: float = 0.25,
+    spike_weight: float = 0.1,
+    declining_weight: float = 0.05
+):
+    """Generate synthetic dataset with custom scenario distribution"""
+    if not filename:
+        filename = f"custom_synthetic_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+    
+    scenario_weights = {
+        "low": low_weight,
+        "medium": medium_weight,
+        "high": high_weight,
+        "spike": spike_weight,
+        "declining": declining_weight
+    }
+    
+    generated_file = dataset_generator.generate_dataset(
+        num_samples, 
+        filename,
+        scenario_weights
+    )
+    
+    return {
+        "status": "success",
+        "filename": generated_file,
+        "samples": num_samples,
+        "scenario_weights": scenario_weights,
+        "path": f"data/hpa_observations/{generated_file}"
+    }
+from .evaluator import PerformanceEvaluator
+
+# Global evaluator
+evaluator = PerformanceEvaluator()
+
+@app.post("/evaluation/start")
+async def start_evaluation(
+    background_tasks: BackgroundTasks,
+    strategy: str,  # "hpa", "hybrid", or "ppo"
+    duration_minutes: int = 30
+):
+    """Start evaluation for a specific strategy"""
+    
+    valid_strategies = ["hpa", "hybrid", "ppo"]
+    if strategy not in valid_strategies:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid strategy. Must be one of: {valid_strategies}"
+        )
+    
+    background_tasks.add_task(
+        evaluator.run_evaluation_scenario,
+        get_state_vector,
+        duration_minutes,
+        30,  # Sample every 30 seconds
+        strategy
+    )
+    
+    return {
+        "status": "evaluation_started",
+        "strategy": strategy,
+        "duration_minutes": duration_minutes,
+        "message": f"Evaluating {strategy} strategy for {duration_minutes} minutes"
+    }
+
+@app.get("/evaluation/results/{strategy}")
+async def get_evaluation_results(strategy: str):
+    """Get latest evaluation results for a strategy"""
+    import glob
+    
+    pattern = f"data/evaluations/{strategy}_eval_*.json"
+    files = glob.glob(pattern)
+    
+    if not files:
+        raise HTTPException(404, f"No evaluation results found for {strategy}")
+    
+    # Get most recent
+    latest_file = max(files, key=os.path.getctime)
+    
+    with open(latest_file, 'r') as f:
+        results = json.load(f)
+    
+    return results
+
+@app.post("/evaluation/compare")
+async def compare_evaluations(strategy_files: List[str] = None):
+    """Compare multiple evaluation results"""
+    import glob
+    
+    if not strategy_files:
+        # Auto-detect latest evaluation for each strategy
+        strategy_files = []
+        for strategy in ["hpa", "hybrid", "ppo"]:
+            pattern = f"data/evaluations/{strategy}_eval_*.json"
+            files = glob.glob(pattern)
+            if files:
+                latest = max(files, key=os.path.getctime)
+                strategy_files.append(latest)
+    
+    if len(strategy_files) < 2:
+        raise HTTPException(400, "Need at least 2 evaluation files to compare")
+    
+    comparison = evaluator.compare_strategies(strategy_files)
+    return comparison
 
 if __name__ == "__main__":
     uvicorn.run(
