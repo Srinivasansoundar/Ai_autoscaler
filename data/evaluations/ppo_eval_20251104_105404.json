@@ -1,0 +1,36 @@
+{
+  "strategy": "ppo",
+  "samples": 10,
+  "latency": {
+    "mean": 4083.0,
+    "median": 4550.0,
+    "p95": 6300.0,
+    "max": 6300.0,
+    "min": 730.0,
+    "stdev": 2082.573461422723
+  },
+  "cpu_utilization": {
+    "mean": 15.597475966666664,
+    "median": 11.270105249999997,
+    "max": 40.3555535,
+    "min": 0.5749366666666667
+  },
+  "error_rate": {
+    "mean": 0.0,
+    "max": 0.0,
+    "total_errors_pct": 0.0
+  },
+  "resource_efficiency": {
+    "avg_pods": 2.6,
+    "max_pods": 3,
+    "min_pods": 2,
+    "pod_changes": 1,
+    "stability_score": 90.0
+  },
+  "sla": {
+    "compliance_pct": 10.0,
+    "violations": 9,
+    "total_samples": 10
+  },
+  "overall_score": 29.48
+}
